@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t elvito/complex-client-test -f ./client/Dockerfile.dev ./client #run tests
+
+scripts:
+  - docker run -e CI=true elvito/complex-client-test npm test #coverage makes it exits 
+
+after_success:
+  - docker build -t elvito/multi-client ./client 
+  - docker build -t elvito/multi-nginx ./nginx 
+  - docker build -t elvito/multi-server ./server 
+  - docker build -t elvito/multi-worker ./worker 
+  # LOGIN in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push elvito/multi-client
+  - docker push elvito/multi-nginx
+  - docker push elvito/multi-server
+  - docker push elvito/multi-worker
